@@ -36,7 +36,7 @@ otpSchema.pre( "save", async function ( next )
 } );
 
 
-otpSchema.method.compareOtp = async function ( enterOtp )
+otpSchema.method.compareOTP = async function ( enterOtp )
 {
     return await bcrypt.compare( enterOtp, this.otp );
 };
