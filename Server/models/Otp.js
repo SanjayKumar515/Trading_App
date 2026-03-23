@@ -29,13 +29,19 @@ otpSchema.pre( "save", async function ( next )
     if ( this.isNew )
     {
         const salt = await bcrypt.genSalt( 10 );
-        await sendVerficationMail( this.email, this.otp, this.otp_type );
+        await sendVerificationMail( this.email, this.otp, this.otp_type );
         this.otp = await bcrypt.hash( this.otp, salt );
     }
     next();
 } );
 
-async function sendVerficationMail ( email, otp, otp_type )
+
+otpSchema.method.compareOtp = async function ( enterOtp )
+{
+    return await bcrypt.compare( enterOtp, this.otp );
+};
+
+async function sendVerificationMail ( email, otp, otp_type )
 {
     try
     {
