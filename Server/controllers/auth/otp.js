@@ -53,13 +53,56 @@ const verifyOtp = async ( req, res ) =>
 
         default:
             throw new BadRequestError( "invalid OTP Request type" );
-
-        const user = await User.findOne({email}) 
-        
-        if(otp_type === "email" && !user){
-           
-
-        }
     }
 
+    const user = await User.findOne( { email } );
+
+    if ( otp_type === "email" && !user )
+    {
+        const register_token = jwt.sign( { email }, process.env.REGISTER_SECRET, {
+            expiresIn: process.env.REGISTER_SECRET_EXPIRY,
+        } );
+        return res
+            .status( StatusCodes.OK )
+            .json( { msg: "OTP VERIFIED SUCCESSFULLY", register_token } );
+
+    }
+    res.status( StatusCodes.OK ).json( { msg: "OTP VERIFIED SUCCESSFULLY" } );
+
 };
+
+const sendOtp = async ( req, res ) =>
+{
+    const { email, otp_type } = req.body;
+
+    if ( !email || !otp_type )
+    {
+        throw new BadRequestError( "Please provide all values" );
+    }
+
+    const user = await User.findOne( { email } );
+
+    if ( !user && otp_type == 'phone' )
+    {
+        throw new BadRequestError( "User not found" );
+    }
+
+    if ( user && otp_type == 'email' )
+    {
+        throw new BadRequestError( "User already exists" );
+    }
+
+    if ( user.phone_number && otp_type === 'phone' )
+    {
+        throw new BadRequestError( "Phone number already exists" );
+    }
+
+    const otp = await generateOTP();
+    const otpPayload = { email, otp, otp_type };
+    await OTP.create( otpPayload );
+
+    res.status( StatusCodes.OK ).json( { msg: "OTP, sent SUCCESSFULLY" } );
+};
+
+export { verifyOtp, sendOtp }
+
